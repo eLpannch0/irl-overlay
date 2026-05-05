@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRL HUD Minimal</title>
+
+<style>
+body {
+  margin: 0;
+  background: transparent;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+
+/* Контейнер */
+.hud {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+
+  padding: 12px 14px;
+  border-radius: 14px;
+
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+
+  box-shadow: 0 0 12px rgba(0,255,150,0.3);
+}
+
+/* Верх */
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+/* LIVE */
+.live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: bold;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background: red;
+  border-radius: 50%;
+  animation: pulse 1s infinite;
+}
+
+/* Город */
+.city {
+  opacity: 0.8;
+}
+
+/* Время */
+.time {
+  font-size: 28px;
+  font-weight: bold;
+  margin-top: 6px;
+}
+
+/* Температура */
+.temp {
+  margin-top: 4px;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 1; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="hud">
+  <div class="top">
+    <div class="live">
+      <div class="dot"></div>
+      LIVE
+    </div>
+    <div class="city">Ottawa</div>
+  </div>
+
+  <div class="time" id="time">--:--</div>
+  <div class="temp" id="temp">--°C</div>
+</div>
+
+<script>
+// ВРЕМЯ
+function updateTime() {
+  const now = new Date();
+  const time = now.toLocaleTimeString("en-CA", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "America/Toronto"
+  });
+  document.getElementById("time").textContent = time;
+}
+
+// ПОГОДА (Оттава)
+async function updateTemp() {
+  try {
+    const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=45.42&longitude=-75.69&current_weather=true");
+    const data = await res.json();
+    document.getElementById("temp").textContent =
+      Math.round(data.current_weather.temperature) + "°C";
+  } catch {
+    document.getElementById("temp").textContent = "--°C";
+  }
+}
+
+updateTime();
+updateTemp();
+
+setInterval(updateTime, 1000);
+setInterval(updateTemp, 600000);
+</script>
+
+</body>
+</html>
