@@ -1,80 +1,140 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRL HUD Minimal</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IRL HUD</title>
 
 <style>
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  background: transparent;
   overflow: hidden;
-  font-family: Arial, sans-serif;
+  background: transparent;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Контейнер */
 .hud {
   position: fixed;
-  top: 15px;
-  left: 15px;
+  top: 18px;
+  left: 18px;
 
-  padding: 12px 14px;
-  border-radius: 14px;
+  width: 150px;
+  padding: 10px 12px;
 
-  background: rgba(0, 0, 0, 0.75);
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.82),
+      rgba(0, 0, 0, 0.62)
+    );
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  border: 1px solid rgba(255, 255, 255, 0.22);
+
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+
   color: white;
-
-  box-shadow: 0 0 12px rgba(0,255,150,0.3);
 }
 
-/* Верх */
-.top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-
-/* LIVE */
-.live {
+.top-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-weight: bold;
+  gap: 5px;
+  margin-bottom: 6px;
 }
 
-.dot {
-  width: 8px;
-  height: 8px;
-  background: red;
+.live-dot {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  animation: pulse 1s infinite;
+  background: #ff2020;
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.95);
+  animation: pulse 1.4s infinite;
 }
 
-/* Город */
+.live-text {
+  color: #ff3b3b;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.9px;
+  text-shadow:
+    0 0 3px rgba(0,0,0,1),
+    0 0 8px rgba(0,0,0,0.9);
+}
+
 .city {
-  opacity: 0.8;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.96);
+  text-shadow:
+    0 0 2px rgba(0,0,0,1),
+    0 0 8px rgba(0,0,0,0.95),
+    0 1px 3px rgba(0,0,0,1);
 }
 
-/* Время */
 .time {
   font-size: 28px;
-  font-weight: bold;
-  margin-top: 6px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.8px;
+  margin-bottom: 8px;
+
+  color: #ffffff;
+
+  text-shadow:
+    0 0 2px rgba(0,0,0,1),
+    0 0 9px rgba(0,0,0,0.95),
+    0 2px 4px rgba(0,0,0,1);
 }
 
-/* Температура */
+.bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .temp {
-  margin-top: 4px;
-  font-size: 14px;
-  opacity: 0.9;
+  font-size: 18px;
+  font-weight: 900;
+  color: #ffffff;
+
+  text-shadow:
+    0 0 2px rgba(0,0,0,1),
+    0 0 8px rgba(0,0,0,0.95),
+    0 1px 3px rgba(0,0,0,1);
+}
+
+.weather {
+  font-size: 15px;
+  opacity: 0.95;
+  text-shadow:
+    0 0 2px rgba(0,0,0,1),
+    0 0 8px rgba(0,0,0,0.9);
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.5); opacity: 0.5; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.65;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 </style>
 </head>
@@ -82,48 +142,87 @@ body {
 <body>
 
 <div class="hud">
-  <div class="top">
-    <div class="live">
-      <div class="dot"></div>
-      LIVE
-    </div>
+  <div class="top-row">
+    <div class="live-dot"></div>
+    <div class="live-text">LIVE</div>
     <div class="city">Ottawa</div>
   </div>
 
   <div class="time" id="time">--:--</div>
-  <div class="temp" id="temp">--°C</div>
+
+  <div class="bottom-row">
+    <div class="temp" id="temp">--°C</div>
+    <div class="weather" id="weather">⛅</div>
+  </div>
 </div>
 
 <script>
-// ВРЕМЯ
 function updateTime() {
   const now = new Date();
+
   const time = now.toLocaleTimeString("en-CA", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
     timeZone: "America/Toronto"
   });
+
   document.getElementById("time").textContent = time;
 }
 
-// ПОГОДА (Оттава)
-async function updateTemp() {
+async function updateWeather() {
   try {
-    const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=45.42&longitude=-75.69&current_weather=true");
-    const data = await res.json();
-    document.getElementById("temp").textContent =
-      Math.round(data.current_weather.temperature) + "°C";
-  } catch {
+    const url =
+      "https://api.open-meteo.com/v1/forecast?latitude=45.4215&longitude=-75.6972&current=temperature_2m,weather_code&timezone=America%2FToronto";
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    const temp = Math.round(data.current.temperature_2m);
+    const code = data.current.weather_code;
+
+    document.getElementById("temp").textContent = temp + "°C";
+    document.getElementById("weather").textContent = getWeatherIcon(code);
+
+  } catch (e) {
     document.getElementById("temp").textContent = "--°C";
+    document.getElementById("weather").textContent = "⛅";
   }
 }
 
+function getWeatherIcon(code) {
+  if (code === 0) return "☀️";
+  if (code === 1 || code === 2) return "🌤️";
+  if (code === 3) return "☁️";
+
+  if (code === 45 || code === 48) return "🌫️";
+
+  if (
+    code === 51 || code === 53 || code === 55 ||
+    code === 56 || code === 57
+  ) return "🌦️";
+
+  if (
+    code === 61 || code === 63 || code === 65 ||
+    code === 66 || code === 67 ||
+    code === 80 || code === 81 || code === 82
+  ) return "🌧️";
+
+  if (
+    code === 71 || code === 73 || code === 75 ||
+    code === 77 || code === 85 || code === 86
+  ) return "❄️";
+
+  if (code === 95 || code === 96 || code === 99) return "⛈️";
+
+  return "⛅";
+}
+
 updateTime();
-updateTemp();
+updateWeather();
 
 setInterval(updateTime, 1000);
-setInterval(updateTemp, 600000);
+setInterval(updateWeather, 10 * 60 * 1000);
 </script>
 
 </body>
